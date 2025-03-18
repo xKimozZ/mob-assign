@@ -1,0 +1,27 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+}
+.container {
+    width: 800px;
+    margin: 0 auto;
+}
+.friend-list {
+    float: left;
+    width: 30%;
+}
+.chat-window {
+    float: right;
+    width: 65%;
+}
+.friend-list ul {
+    list-style-type: none;
+    padding: 0;
+}
+.friend-list li {
+    padding: 5px;
+    cursor: pointer;
+}
+.friend-list li:hover {
+    background-color: #f0f0f0;
+}
