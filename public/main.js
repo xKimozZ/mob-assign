@@ -1,6 +1,6 @@
 import { checkAndRedirect } from "./js/session.js";
 import { loginUser, registerUser, logoutUser } from "./js/auth.js";
-import { loadFriends, addFriend, selectFriend, loadPendingRequests, loadSentRequests } from "./js/chat.js";
+import { loadFriends, addFriend, selectFriend, loadPendingRequests, loadSentRequests, sendMessageHandler } from "./js/chat.js";
 
 document.addEventListener("DOMContentLoaded", async function () {
   await checkAndRedirect();
@@ -21,5 +21,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     await loadSentRequests();
     document.getElementById("logoutBtn").addEventListener("click", logoutUser);
     document.getElementById("addFriendForm").addEventListener("submit", addFriend);
+
+    // Attach sendMessage event to the form
+    const messageForm = document.getElementById("messageForm");
+    if (messageForm) {
+      messageForm.addEventListener("submit", sendMessageHandler);
+    }
   }
 });

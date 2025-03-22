@@ -129,55 +129,131 @@ app.get('/api/friends', (req, res) => {
 
 app.post('/api/add_friend', (req, res) => {
     if (!req.session.userId) {
-        return res.status(401).json({ error: "Not logged in" });
+      return res.status(401).json({ error: "Not logged in" });
     }
     const { friend_username } = req.body;
     if (!friend_username) {
-        return res.status(400).json({ error: "Friend username required" });
+      return res.status(400).json({ error: "Friend username required" });
     }
+    
     db.get(`SELECT * FROM users WHERE username = ?`, [friend_username], (err, friend) => {
-        if (err || !friend) {
-            return res.status(400).json({ error: "User not found" });
+      if (err || !friend) {
+        return res.status(400).json({ error: "User not found" });
+      }
+      
+      db.get(`SELECT * FROM friends WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)`, 
+        [req.session.userId, friend.id, friend.id, req.session.userId], (err, row) => {
+        if (err) return res.status(500).json({ error: "Database error" });
+        
+        if (row) {
+          if (row.status === "pending") {
+            if (row.user_id === req.session.userId) {
+              return res.status(400).json({ error: "Friend request already sent" });
+            } else {
+              return res.status(400).json({ error: "This user has already sent you a request. Accept or reject it first." });
+            }
+          } else if (row.status === "accepted") {
+            return res.status(400).json({ error: "You are already friends" });
+          } else if (row.status === "rejected") {
+            db.run(`DELETE FROM friends WHERE user_id = ? AND friend_id = ?`, [req.session.userId, friend.id], function(delErr) {
+              if (delErr) return res.status(500).json({ error: "Could not reset friend request" });
+              insertFriendRequest();
+            });
+            return;
+          }
+        } else {
+          insertFriendRequest();
         }
-        // Insert the friend request with status "pending"
+      });
+      
+      function insertFriendRequest() {
         db.run(
-            `INSERT OR IGNORE INTO friends (user_id, friend_id, status) VALUES (?, ?, 'pending')`,
-            [req.session.userId, friend.id],
-            function (err) {
-                if (err) {
-                    return res.status(500).json({ error: "Could not send friend request" });
-                }
-                res.json({ message: "Friend request sent and pending approval" });
-            }
+          `INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, 'pending')`,
+          [req.session.userId, friend.id],
+          function (err) {
+            if (err) return res.status(500).json({ error: "Could not send friend request" });
+            res.json({ message: "Friend request sent and pending approval" });
+          }
         );
+      }
     });
-});
-
-app.post('/api/respond_friend_request', (req, res) => {
+  });
+  
+  app.post('/api/respond_friend_request', (req, res) => {
     if (!req.session.userId) {
-        return res.status(401).json({ error: "Not logged in" });
+      return res.status(401).json({ error: "Not logged in" });
     }
-    const { requester_id, response } = req.body; // requester_id: user who sent the request; response: 'accepted' or 'rejected'
-    
+    const { requester_id, response } = req.body;
     if (!requester_id || !response || (response !== 'accepted' && response !== 'rejected')) {
-        return res.status(400).json({ error: "Invalid parameters" });
+      return res.status(400).json({ error: "Invalid parameters" });
     }
     
-    // Update the friend request where the logged-in user is the recipient
-    db.run(
-        `UPDATE friends SET status = ? WHERE user_id = ? AND friend_id = ?`,
-        [response, requester_id, req.session.userId],
+    if (response === "accepted") {
+      db.run(
+        `UPDATE friends SET status = 'accepted' WHERE user_id = ? AND friend_id = ?`,
+        [requester_id, req.session.userId],
         function (err) {
-            if (err) {
-                return res.status(500).json({ error: "Could not respond to friend request" });
-            }
-            if (this.changes === 0) {
-                return res.status(400).json({ error: "No such friend request found" });
-            }
-            res.json({ message: `Friend request ${response}` });
+          if (err) return res.status(500).json({ error: "Could not respond to friend request" });
+          if (this.changes === 0) return res.status(400).json({ error: "No such friend request found" });
+          res.json({ message: "Friend request accepted" });
         }
-    );
-});
+      );
+    } else {
+      db.run(
+        `DELETE FROM friends WHERE user_id = ? AND friend_id = ?`,
+        [requester_id, req.session.userId],
+        function (err) {
+          if (err) return res.status(500).json({ error: "Could not respond to friend request" });
+          if (this.changes === 0) return res.status(400).json({ error: "No such friend request found" });
+          res.json({ message: "Friend request rejected" });
+        }
+      );
+    }
+  });
+  
+  
+
+  app.post('/api/respond_friend_request', (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Not logged in" });
+    }
+    const { requester_id, response } = req.body;
+    if (!requester_id || !response || (response !== 'accepted' && response !== 'rejected')) {
+      return res.status(400).json({ error: "Invalid parameters" });
+    }
+    
+    if (response === "accepted") {
+      db.run(
+        `UPDATE friends SET status = 'accepted' WHERE user_id = ? AND friend_id = ?`,
+        [requester_id, req.session.userId],
+        function (err) {
+          if (err) {
+            return res.status(500).json({ error: "Could not respond to friend request" });
+          }
+          if (this.changes === 0) {
+            return res.status(400).json({ error: "No such friend request found" });
+          }
+          res.json({ message: "Friend request accepted" });
+        }
+      );
+    } else {
+      // If rejected, delete the friend request row so a new request can be sent later.
+      db.run(
+        `DELETE FROM friends WHERE user_id = ? AND friend_id = ?`,
+        [requester_id, req.session.userId],
+        function (err) {
+          if (err) {
+            return res.status(500).json({ error: "Could not respond to friend request" });
+          }
+          if (this.changes === 0) {
+            return res.status(400).json({ error: "No such friend request found" });
+          }
+          res.json({ message: "Friend request rejected" });
+        }
+      );
+    }
+  });
+  
 
 app.get('/api/pending_friend_requests', (req, res) => {
     if (!req.session.userId) {
