@@ -17,8 +17,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   if (window.location.pathname.endsWith("chat.html")) {
     await loadFriends();
-    await loadPendingRequests();  // Load pending friend requests
-    await loadSentRequests();      // Load sent friend requests
+    await loadPendingRequests();
+    await loadSentRequests();
     document.getElementById("logoutBtn").addEventListener("click", logoutUser);
     document.getElementById("addFriendForm").addEventListener("submit", addFriend);
   }

@@ -262,22 +262,25 @@ app.get('/api/get_messages', (req, res) => {
         return res.status(401).json({ error: "Not logged in" });
     }
     const friendId = req.query.friend_id;
+    const afterTimestamp = req.query.after || 0; // default to 0 if not provided
     if (!friendId) {
         return res.status(400).json({ error: "Friend ID required" });
     }
     const sql = `
       SELECT m.*, u.username as sender_name FROM messages m
       JOIN users u ON m.sender_id = u.id
-      WHERE (m.sender_id = ? AND m.receiver_id = ?) OR (m.sender_id = ? AND m.receiver_id = ?)
+      WHERE ((m.sender_id = ? AND m.receiver_id = ?) OR (m.sender_id = ? AND m.receiver_id = ?))
+        AND m.timestamp > ?
       ORDER BY m.timestamp ASC
     `;
-    db.all(sql, [req.session.userId, friendId, friendId, req.session.userId], (err, rows) => {
+    db.all(sql, [req.session.userId, friendId, friendId, req.session.userId, afterTimestamp], (err, rows) => {
         if (err) {
             return res.status(500).json({ error: "Could not retrieve messages" });
         }
         res.json(rows);
     });
 });
+
 
 // Start the Node.js server
 const PORT = process.env.PORT || 3000;
