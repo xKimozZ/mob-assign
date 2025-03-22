@@ -4,15 +4,23 @@ export async function checkAndRedirect() {
         let data = await response.json();
         let currentPage = window.location.pathname;
 
+        console.log("Session Check Response:", data); // ✅ Debugging Step
+
         if (data.userId) {
-            // ✅ If user is logged in, do not allow them to visit login or register pages
+            // ✅ If logged in, do not allow them to visit login or register pages
             if (currentPage.endsWith("login.html") || currentPage.endsWith("register.html")) {
-                window.location.href = "chat.html"; // Redirect logged-in users
+                window.location.href = "chat.html";
+                return;
+            }
+            // ✅ Set the welcome message on chat.html
+            const welcomeElement = document.getElementById("welcome");
+            if (welcomeElement) {
+                welcomeElement.textContent = "Welcome, " + data.username;
             }
         } else {
-            // ❌ If user is NOT logged in, do NOT allow them to visit chat.html
+            // ❌ If not logged in, do NOT allow them to visit chat.html
             if (currentPage.endsWith("chat.html")) {
-                window.location.href = "login.html"; // Redirect guests
+                window.location.href = "login.html";
             }
         }
     } catch (error) {

@@ -9,23 +9,45 @@
 <div class="container">
     <h2 id="welcome">Welcome</h2>
     <button id="logoutBtn">Logout</button>
-    <div class="friend-list">
-        <h3>Friends</h3>
-        <ul id="friends"></ul>
-        <form id="addFriendForm">
-            <input type="text" id="friend_username" placeholder="Add friend by username" required>
-            <button type="submit">Add Friend</button>
-        </form>
+    
+    <!-- Existing friend list section -->
+<div class="friend-list">
+    <h3>Friends</h3>
+    <ul id="friends"></ul>
+    <form id="addFriendForm">
+      <input type="text" id="friend_username" placeholder="Add friend by username" required>
+      <button type="submit">Add Friend</button>
+    </form>
+  </div>
+  
+  <!-- New pending friend requests section -->
+  <div class="pending-requests">
+    <h3>Pending Friend Requests</h3>
+    <div id="pendingRequests">
+      <!-- Pending requests will be loaded here -->
     </div>
-    <div class="chat-window">
-        <h3 id="chat-with">Select a friend to chat</h3>
-        <div id="chat-messages" style="border:1px solid #ccc; height:300px; overflow-y:scroll;"></div>
-        <form id="messageForm">
-            <input type="hidden" id="receiver_id">
-            <input type="text" id="message" placeholder="Type a message" required>
-            <button type="submit">Send</button>
-        </form>
+  </div>
+  
+  <!-- New sent friend requests section -->
+  <div class="sent-requests">
+    <h3>Sent Friend Requests</h3>
+    <div id="sentRequests">
+      <!-- Sent requests will be loaded here -->
     </div>
+  </div>
+  
+  <!-- Chat window remains unchanged -->
+  <div class="chat-window">
+    <h3 id="chat-with">Select a friend to chat</h3>
+    <div id="chat-messages" style="border:1px solid #ccc; height:300px; overflow-y:scroll;"></div>
+    <form id="messageForm">
+      <input type="hidden" id="receiver_id">
+      <input type="text" id="message" placeholder="Type a message" required>
+      <button type="submit">Send</button>
+    </form>
+  </div>
+  
+
 </div>
 <script type="module" src="./main.js"></script>
 </body>

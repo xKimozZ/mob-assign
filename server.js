@@ -126,7 +126,7 @@ app.get('/api/friends', (req, res) => {
     });
 });
 
-// Add a friend (auto-accepted for simplicity)
+
 app.post('/api/add_friend', (req, res) => {
     if (!req.session.userId) {
         return res.status(401).json({ error: "Not logged in" });
@@ -139,14 +139,105 @@ app.post('/api/add_friend', (req, res) => {
         if (err || !friend) {
             return res.status(400).json({ error: "User not found" });
         }
-        db.run(`INSERT OR IGNORE INTO friends (user_id, friend_id, status) VALUES (?, ?, 'accepted')`, [req.session.userId, friend.id], function(err) {
-            if (err) {
-                return res.status(500).json({ error: "Could not add friend" });
+        // Insert the friend request with status "pending"
+        db.run(
+            `INSERT OR IGNORE INTO friends (user_id, friend_id, status) VALUES (?, ?, 'pending')`,
+            [req.session.userId, friend.id],
+            function (err) {
+                if (err) {
+                    return res.status(500).json({ error: "Could not send friend request" });
+                }
+                res.json({ message: "Friend request sent and pending approval" });
             }
-            res.json({ message: "Friend added" });
-        });
+        );
     });
 });
+
+app.post('/api/respond_friend_request', (req, res) => {
+    if (!req.session.userId) {
+        return res.status(401).json({ error: "Not logged in" });
+    }
+    const { requester_id, response } = req.body; // requester_id: user who sent the request; response: 'accepted' or 'rejected'
+    
+    if (!requester_id || !response || (response !== 'accepted' && response !== 'rejected')) {
+        return res.status(400).json({ error: "Invalid parameters" });
+    }
+    
+    // Update the friend request where the logged-in user is the recipient
+    db.run(
+        `UPDATE friends SET status = ? WHERE user_id = ? AND friend_id = ?`,
+        [response, requester_id, req.session.userId],
+        function (err) {
+            if (err) {
+                return res.status(500).json({ error: "Could not respond to friend request" });
+            }
+            if (this.changes === 0) {
+                return res.status(400).json({ error: "No such friend request found" });
+            }
+            res.json({ message: `Friend request ${response}` });
+        }
+    );
+});
+
+app.get('/api/pending_friend_requests', (req, res) => {
+    if (!req.session.userId) {
+        return res.status(401).json({ error: "Not logged in" });
+    }
+    // Select pending requests where the logged-in user is the recipient
+    const sql = `
+      SELECT u.id, u.username FROM users u
+      JOIN friends f ON u.id = f.user_id
+      WHERE f.friend_id = ? AND f.status = 'pending'
+    `;
+    db.all(sql, [req.session.userId], (err, rows) => {
+        if (err) {
+            return res.status(500).json({ error: "Could not retrieve pending requests" });
+        }
+        res.json(rows);
+    });
+});
+
+app.get('/api/sent_friend_requests', (req, res) => {
+    if (!req.session.userId) {
+        return res.status(401).json({ error: "Not logged in" });
+    }
+    const sql = `
+      SELECT f.friend_id AS id, u.username 
+      FROM friends f 
+      JOIN users u ON f.friend_id = u.id 
+      WHERE f.user_id = ? AND f.status = 'pending'
+    `;
+    db.all(sql, [req.session.userId], (err, rows) => {
+        if (err) {
+            return res.status(500).json({ error: "Could not retrieve sent friend requests" });
+        }
+        res.json(rows);
+    });
+});
+
+app.post('/api/cancel_friend_request', (req, res) => {
+    if (!req.session.userId) {
+        return res.status(401).json({ error: "Not logged in" });
+    }
+    const { friend_id } = req.body;
+    if (!friend_id) {
+        return res.status(400).json({ error: "Friend id is required" });
+    }
+    const sql = `
+      DELETE FROM friends 
+      WHERE user_id = ? AND friend_id = ? AND status = 'pending'
+    `;
+    db.run(sql, [req.session.userId, friend_id], function(err) {
+        if (err) {
+            return res.status(500).json({ error: "Could not cancel friend request" });
+        }
+        if (this.changes === 0) {
+            return res.status(400).json({ error: "No pending request found to cancel" });
+        }
+        res.json({ message: "Friend request canceled" });
+    });
+});
+
 
 // Send a message to a friend
 app.post('/api/send_message', (req, res) => {
