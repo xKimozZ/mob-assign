@@ -1,3 +1,5 @@
+const fs = require('fs');
+const https = require('https');
 const express = require('express');
 const session = require('express-session');
 const sqlite3 = require('sqlite3').verbose();
@@ -8,19 +10,42 @@ const app = express();
 const dbFile = './chat.db';
 const db = new sqlite3.Database(dbFile);
 
-// Middleware for parsing JSON and URL-encoded bodies
+// 🔹 Load SSL Certificates (Replace these with your actual certificate files)
+const httpsOptions = {
+    pfx: fs.readFileSync('localhost.pfx'), // Path to your PFX file
+    passphrase: '1' // Replace with the password you used when exporting
+  };
+  
+
+// 🔹 Middleware for parsing JSON and URL-encoded bodies
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Session middleware configuration
+// 🔹 Secure session configuration (cookie must match IIS settings)
 app.use(session({
-    secret: 'your_secret_key', // replace with a secure key in production
+    secret: process.env.SESSION_SECRET || 'your_secret_key',
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: false,
+    unset: 'destroy', // <-- This ensures destroyed sessions are removed.
+    cookie: { 
+        secure: true,   // Only sent over HTTPS.
+        httpOnly: true, // Not accessible to client JS.
+        sameSite: 'None'
+    }
 }));
 
+app.use((req, res, next) => {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+    res.setHeader("Surrogate-Control", "no-store");
+    next();
+});
+
+
+
 // Serve static files from the /public directory
-app.use(express.static(path.join(__dirname, 'public')));
+//app.use(express.static(path.join(__dirname, 'public')));
 
 // Initialize Database Tables
 db.serialize(() => {
@@ -91,18 +116,37 @@ app.post('/api/login', (req, res) => {
 
 // Logout the current user
 app.get('/api/logout', (req, res) => {
-    req.session.destroy();
-    res.json({ message: "Logged out" });
+    console.log("Before logout, session:", req.session);
+    req.session.destroy(err => {
+        if (err) {
+            console.error("Logout error:", err);
+            return res.status(500).json({ error: "Could not log out" });
+        }
+        // Clear the cookie exactly matching the session options
+        res.clearCookie('connect.sid', { path: '/', secure: true, httpOnly: true, sameSite: 'None' });
+        console.log("After logout, session destroyed. Cookie cleared.");
+        res.json({ message: "Logged out" });
+    });
 });
+
 
 // Get the current session user information
 app.get('/api/me', (req, res) => {
+    // Prevent caching so that the client always gets fresh session data
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+
+    console.log("Session at /api/me:", req.session);
     if (req.session.userId) {
         res.json({ userId: req.session.userId, username: req.session.username });
     } else {
         res.status(401).json({ error: "Not logged in" });
     }
 });
+
+
 
 // Retrieve the friend list for the logged-in user
 app.get('/api/friends', (req, res) => {
@@ -360,6 +404,11 @@ app.get('/api/get_messages', (req, res) => {
 
 // Start the Node.js server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server started on port ${PORT}`);
+
+https.createServer(httpsOptions, app).listen(PORT, () => {
+    console.log(`HTTPS Server started on port ${PORT}`);
 });
+
+// app.listen(PORT, () => {
+//     console.log(`Server started on port ${PORT}`);
+// });

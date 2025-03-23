@@ -1,14 +1,22 @@
+async function hashPassword(password) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 export async function loginUser(event) {
     event.preventDefault();
     
     const username = document.getElementById("username").value;
     const password = document.getElementById("password").value;
+    const hashedPassword = await hashPassword(password); // 🔹 Hash before sending
 
     try {
         let response = await fetch('/api/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({ username, password: hashedPassword }) // 🔹 Send hashed password
         });
 
         let data = await response.json();
@@ -27,12 +35,13 @@ export async function registerUser(event) {
     
     const username = document.getElementById("username").value;
     const password = document.getElementById("password").value;
+    const hashedPassword = await hashPassword(password); // 🔹 Hash before sending
 
     try {
         let response = await fetch('/api/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({ username, password: hashedPassword }) // 🔹 Send hashed password
         });
 
         let data = await response.json();
@@ -48,9 +57,13 @@ export async function registerUser(event) {
 
 export async function logoutUser() {
     try {
-        let response = await fetch('/api/logout');
+        const url = '/api/logout?_=' + Date.now();
+        let response = await fetch(url, { credentials: 'include' });
         await response.json();
-        window.location.href = "login.html"; // Redirect to login
+        // Set a flag indicating that logout just occurred
+        localStorage.setItem("loggedOut", "true");
+        // Delay the redirect to allow session to clear
+            window.location.href = "login.html";
     } catch (error) {
         console.error("Failed to logout:", error);
     }

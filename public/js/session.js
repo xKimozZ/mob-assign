@@ -1,24 +1,21 @@
 export async function checkAndRedirect() {
+    // Append a unique query parameter to prevent caching
+    const url = '/api/me?_=' + Date.now();
     try {
-        let response = await fetch('/api/me');
+        let response = await fetch(url, { credentials: 'include', cache: 'no-store' });
         let data = await response.json();
         let currentPage = window.location.pathname;
-
-        console.log("Session Check Response:", data); // ✅ Debugging Step
-
+        console.log("Session Check Response:", data);
         if (data.userId) {
-            // ✅ If logged in, do not allow them to visit login or register pages
             if (currentPage.endsWith("login.html") || currentPage.endsWith("register.html")) {
                 window.location.href = "chat.html";
                 return;
             }
-            // ✅ Set the welcome message on chat.html
             const welcomeElement = document.getElementById("welcome");
             if (welcomeElement) {
                 welcomeElement.textContent = "Welcome, " + data.username;
             }
         } else {
-            // ❌ If not logged in, do NOT allow them to visit chat.html
             if (currentPage.endsWith("chat.html")) {
                 window.location.href = "login.html";
             }
@@ -26,7 +23,7 @@ export async function checkAndRedirect() {
     } catch (error) {
         console.error("Error checking session:", error);
         if (window.location.pathname.endsWith("chat.html")) {
-            window.location.href = "login.html"; // Fail-safe redirect
+            window.location.href = "login.html";
         }
     }
 }
