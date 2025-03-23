@@ -1,0 +1,127 @@
+DEPLOYMENT_GUIDE.txt
+=====================
+
+Project: Native Text Chat Application Using HTTP and IIS  
+Objective:  
+  Deploy a simple text-based chat application with a Node.js API backend secured by HTTPS and IIS serving the static files and acting as a reverse proxy for API calls.
+
+Pre-requisites:
+  • Windows machine with IIS installed.
+  • IIS URL Rewrite and Application Request Routing (ARR) modules installed.
+  • Node.js installed.
+  • MMC (Microsoft Management Console) for certificate management.
+  • Source code for the chat application (including server.js and the “public” folder with HTML/CSS/JS files).
+
+Deployment Steps:
+-----------------
+
+1. **Set Up the IIS Website:**
+   a. Open IIS Manager (press Win+R, type “inetmgr”, and hit Enter).  
+   b. Right-click “Sites” and select “Add Website…”.  
+   c. Enter a Site name (e.g., “ChatApp”), set the **Physical path** to your project’s **public** folder.  
+   d. For **Binding**, select:  
+      - Type: **HTTPS**  
+      - IP Address: **All Unassigned** (or specific IP)  
+      - Port: **Choose your HTTPS port (e.g., 8885)**  
+      - Host name: *(optional, e.g., localhost)*  
+      - **SSL Certificate**: Choose an existing certificate (if available, select the one for “localhost”).  
+   e. Click **OK** to create the site.
+
+2. **Export the Certificate from IIS Using MMC:**
+   a. Press **Win+R**, type `mmc`, and hit Enter.  
+   b. Go to **File > Add/Remove Snap-in…**  
+   c. Select **Certificates**, click **Add**, choose **Computer account**, then **Local computer**, and click **Finish** then **OK**.  
+   d. Navigate to **Personal > Certificates**.  
+   e. Locate your **localhost** certificate (the one assigned to your IIS site).  
+   f. Right-click the certificate, select **All Tasks > Export…**.  
+   g. In the **Certificate Export Wizard**:  
+         - Choose **Yes, export the private key**.  
+         - Select **Personal Information Exchange – PKCS #12 (.PFX)** format.  
+         - Check **Include all certificates in the certification path** and **Export all extended properties**.  
+         - Set a **password** (choose an easy-to-remember password, e.g., `1` for local use).  
+         - Save the file as **localhost.pfx** in your project folder next to `server.js`.
+
+3. **Import the Certificate to Trusted Root Certification Authorities:**
+   a. Open **MMC** again (`mmc` via Run).  
+   b. Navigate to **File > Add/Remove Snap-in… > Certificates > Computer Account > Local Computer**.  
+   c. In the left panel, expand **Trusted Root Certification Authorities**.  
+   d. Right-click **Certificates**, select **All Tasks > Import…**.  
+   e. Select the **localhost.pfx** file you exported earlier.  
+   f. Enter the **password** you set during export.  
+   g. Complete the wizard and ensure the certificate is added successfully.  
+
+4. **Configure IIS Reverse Proxy for API Calls:**
+   a. With your new site selected in IIS, double-click **URL Rewrite**.  
+   b. Click **Add Rule(s)…**, then select **Blank Rule** under **Inbound Rules** and click **OK**.  
+   c. Name the rule **API Proxy**.  
+   d. In **Match URL**, set:  
+         - **Pattern**: `^api/(.*)`  
+   e. Under **Action**, select:  
+         - **Action type**: Rewrite  
+         - **Rewrite URL**: `https://localhost:3000/api/{R:1}`  
+   f. Click **Apply**.  
+   g. Next, double-click **Application Request Routing Cache** (at the server level), and then click **Server Proxy Settings…** in the Actions pane.  
+      - Make sure **Enable Proxy** is checked.  
+
+5. **Configure the Node.js Backend for HTTPS:**
+   a. In `server.js`, load the certificate:  
+      ```javascript
+      const fs = require('fs');
+      const https = require('https');
+
+      const httpsOptions = {
+          pfx: fs.readFileSync('localhost.pfx'),
+          passphrase: '1' // Use the same password you set during export
+      };
+      ```
+   b. Ensure your Node.js server uses HTTPS:  
+      ```javascript
+      const PORT = process.env.PORT || 3000;
+      https.createServer(httpsOptions, app).listen(PORT, () => {
+          console.log(`HTTPS Server started on port ${PORT}`);
+      });
+      ```
+   c. Make sure your session middleware is set up with secure cookies:  
+      ```javascript
+      app.use(session({
+          secret: process.env.SESSION_SECRET || 'your_secret_key',
+          resave: false,
+          saveUninitialized: false,
+          unset: 'destroy',
+          cookie: { 
+              secure: true,
+              httpOnly: true,
+              sameSite: 'None'
+          }
+      }));
+      ```
+
+6. **Finalize and Test:**
+   a. Start your **Node.js backend**:  
+         Open a Command Prompt in your project folder and run:  
+         ```
+         node server.js
+         ```
+   b. In IIS, make sure your site is running and properly bound (HTTPS on port 8885).  
+   c. Open a browser and go to:  
+         ```
+         https://localhost:8885/
+         ```
+      - The login page should load.  
+   d. Test the API endpoints via IIS:  
+         ```
+         https://localhost:8885/api/me
+         ```
+   e. Verify session cookies (`connect.sid`) are set and cleared correctly.
+
+7. **Troubleshooting:**
+   - If API calls fail, check:  
+     - **Node.js console logs**  
+     - **IIS logs (C:\inetpub\logs\)**  
+   - If the browser **does not trust the certificate**, manually add it via **MMC** under **Trusted Root Certification Authorities**.  
+   - Ensure **URL Rewrite rules** are correct in IIS.  
+
+---
+
+This guide ensures IIS serves static files, acts as a reverse proxy, and enforces HTTPS with a valid SSL certificate. Adjust any steps as needed for your specific environment.
+
