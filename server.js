@@ -15,6 +15,29 @@ const app = express();
 const dbFile = './chat.db';
 const db = new sqlite3.Database(dbFile);
 
+db.serialize(() => {
+  db.run(`CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL
+  )`);
+  db.run(`CREATE TABLE IF NOT EXISTS friends (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    friend_id INTEGER NOT NULL,
+    status TEXT DEFAULT 'accepted',
+    UNIQUE(user_id, friend_id)
+  )`);
+  db.run(`CREATE TABLE IF NOT EXISTS messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sender_id INTEGER NOT NULL,
+    receiver_id INTEGER NOT NULL,
+    content TEXT NOT NULL,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
+});
+
+
 // Load SSL Certificates (make sure the file and passphrase are correct)
 const httpsOptions = {
     pfx: fs.readFileSync('localhost.pfx'),
