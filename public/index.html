@@ -3,6 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <title>Welcome - Chat App</title>
+    <style>
+        .loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  font-family: 'Roboto', sans-serif;
+
+}
+
+.spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 10px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+    </style>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             fetch('/api/me') // Call API to check if user is logged in
@@ -22,6 +49,9 @@
     </script>
 </head>
 <body>
-    <h1>Loading...</h1>
-</body>
+    <div class="loading-container">
+      <div class="spinner"></div>
+      <p>Loading, please wait...</p>
+    </div>
+  </body>  
 </html>
