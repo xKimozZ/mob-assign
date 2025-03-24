@@ -52,10 +52,10 @@ export function updatePendingRequestsUI(requests) {
           div.style.justifyContent = "space-between";
           div.style.alignItems = "center";
           div.style.padding = "6px 0";
-          div.innerHTML = `<span>${req.username}</span>
-            <div>
-              <button class="approveBtn" data-id="${req.id}" style="margin-right: 10px;">Accept</button>
-              <button class="rejectBtn" data-id="${req.id}">Reject</button>
+            div.innerHTML = `<span>${req.username}</span>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <button class="approveBtn" data-id="${req.id}" style="margin-right: 10px; padding: 2px 6px; font-size: 12px;">Accept</button>
+              <button class="rejectBtn" data-id="${req.id}" style="padding: 2px 6px; font-size: 12px;">Reject</button>
             </div>`;
           container.appendChild(div);
       });
