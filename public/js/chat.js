@@ -9,7 +9,7 @@ export async function intializeChatEvents(logoutCallback) {
   await loadSentRequests();
 
   document.getElementById("logoutBtn").addEventListener("click", logoutCallback);
-  document.getElementById("addFriendForm").addEventListener("submit", addFriend);
+  //document.getElementById("addFriendForm").addEventListener("submit", addFriend);
   document.getElementById("messageForm").addEventListener("submit", sendMessageHandler);
   document.getElementById("searchFriendForm").addEventListener("submit", searchFriends);
 
@@ -91,8 +91,8 @@ export async function addFriend(event) {
     if (!friendInput) return;
     const friend_username = friendInput.value;
     const data = await api.addFriendRequest(friend_username);
-    if (data.error) alert(data.error);
-    else await loadFriends();
+    alert(data.message || data.error);
+    await loadFriends();
 }
 
 export async function sendMessageHandler(event) {
@@ -120,14 +120,19 @@ export async function sendMessageHandler(event) {
 
 // NEW: Search Friends - split into API call and UI update
 export async function searchFriends(event) {
-    event.preventDefault();
-    const term = document.getElementById("searchTerm").value;
-    try {
-        const users = await api.searchFriends(term);
-        ui.updateSearchResultsUI(users);
-    } catch (error) {
-        console.error("Search error:", error);
-    }
+  event.preventDefault();
+  const term = document.getElementById("searchTerm").value;
+  try {
+      const users = await api.searchFriends(term);
+      // Pass a callback that handles adding a friend by username
+      ui.updateSearchResultsUI(users, async (username) => {
+          const response = await api.addFriendRequest(username);
+          alert(response.message || response.error);
+          await loadFriends();
+      });
+  } catch (error) {
+      console.error("Search error:", error);
+  }
 }
 
 export async function loadPendingRequests() {
