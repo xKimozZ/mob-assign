@@ -1,12 +1,17 @@
 async function noCacheFetch(url, options = {}) {
-    const noCacheUrl = `${url}?_=${Date.now()}`;
-    const defaultHeaders = { "Cache-Control": "no-store, no-cache, must-revalidate", "Pragma": "no-cache" };
+    const separator = url.includes('?') ? '&' : '?';
+    const noCacheUrl = `${url}${separator}_=${Date.now()}`;
+    const defaultHeaders = { 
+        "Cache-Control": "no-store, no-cache, must-revalidate", 
+        "Pragma": "no-cache" 
+    };
 
     if (!options.headers) options.headers = {};
     options.headers = { ...options.headers, ...defaultHeaders };
 
     return fetch(noCacheUrl, options).then(res => res.json());
 }
+
 
 export async function sendMessage(receiverId, content) {
     return noCacheFetch("/api/send_message", {
@@ -51,6 +56,19 @@ export async function getSentRequests() {
 export async function cancelFriendRequest(friendId) {
     return noCacheFetch("/api/cancel_friend_request", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ friend_id: friendId })
+    });
+}
+
+// NEW: Search friends API
+export async function searchFriends(term) {
+    return noCacheFetch(`/api/search_friends?term=${encodeURIComponent(term)}`, { credentials: "include", cache: "no-store" });
+}
+
+export async function unfriend(friendId) {
+    return noCacheFetch("/api/unfriend", {
+        method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ friend_id: friendId })
     });
