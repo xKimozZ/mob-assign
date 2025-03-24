@@ -1,0 +1,118 @@
+/* components.css */
+
+/* Buttons */
+button {
+    background-color: #3498db;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #fff;
+    font-size: 14px;
+    transition: background-color 0.2s ease;
+  }
+  
+  button:hover {
+    background-color: #2980b9;
+  }
+  
+  /* Specific Unfriend Button */
+  .unfriend-btn {
+    background-color: #e67e22;
+    margin-left: 20px;
+  }
+  
+  .unfriend-btn:hover {
+    background-color: #d35400;
+  }
+  
+  /* Sidebar Lists & Forms */
+  .sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 150px;
+    overflow-y: auto;
+  }
+  
+  .sidebar li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+  }
+  
+  .sidebar li:last-child {
+    border-bottom: none;
+  }
+  
+  .sidebar li:hover {
+    background-color: #f0f0f0;
+  }
+  
+  .sidebar form input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+  
+  /* Requests Container */
+  .requests-container {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .received-requests,
+  .sent-requests {
+    width: 48%;
+  }
+  
+  #pendingRequests, #sentRequests {
+    max-height: 150px;
+    overflow-y: auto;
+    padding-inline: 16px;
+  }
+  
+  /* Chat Form */
+  .chat-form {
+    display: flex;
+  }
+  
+  .chat-form input[type="text"] {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  
+  .chat-form button {
+    margin-left: 10px;
+    padding: 8px 12px;
+    background-color: #3498db;
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    cursor: pointer;
+  }
+  
+  /* Friend Search */
+  .friend-search ul,
+  #searchResults ul {
+    list-style: none;
+    padding: 8px;
+    margin: 0;
+    max-height: 150px;
+    overflow-y: auto;
+  }
+  
+  #searchResults li {
+    border-bottom: 1px solid #eee;
+    cursor: default;
+  }
+  

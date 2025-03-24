@@ -1,0 +1,63 @@
+/* layout.css */
+
+/* Header */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #3498db;
+    padding: 10px 20px;
+    color: #fff;
+  }
+  
+  header h1 {
+    margin: 0;
+    font-size: 24px;
+  }
+  
+  .container {
+    display: flex;
+    margin: 20px;
+    /* Fix overall height */
+    height: 82vh;
+  }
+  
+  /* Sidebar */
+  .sidebar {
+    width: 400px;
+    background-color: #fff;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    margin-right: 20px;
+    height: 100%;
+    overflow-y: auto;
+  }
+  
+  /* Chat Area */
+  .chat-area {
+    flex: 1;
+    background-color: #fff;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  
+  .chat-interface {
+    flex: 1;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px;
+    background-color: #fafafa;
+    overflow-y: auto;
+  }
+  
+  .chat-interface h3 {
+    margin: 0 0 10px;
+    font-size: 20px;
+  }
+  
