@@ -1,63 +1,78 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <title>Chat - Chat App</title>
-    <link rel="stylesheet" href="main.css">
+  <meta charset="UTF-8">
+  <title>Chat - Chat App</title>
+  <link rel="stylesheet" href="main.css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
 </head>
 <body>
-<div class="container">
-    <h2 id="welcome">Welcome</h2>
+  <!-- Header with Welcome and Logout in the same row -->
+  <header>
+    <h1 id="welcome">Welcome, User</h1>
     <button id="logoutBtn">Logout</button>
-    
-    <!-- Friend list section -->
-    <div class="friend-list">
-        <h3>Friends</h3>
+  </header>
+
+  <!-- Main container split into sidebar and main chat area -->
+  <div class="container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <!-- Current Friends -->
+      <section class="current-friends">
+        <h3>Current Friends</h3>
         <ul id="friends"></ul>
-        <form id="addFriendForm">
-          <input type="text" id="friend_username" placeholder="Add friend by username" required>
-          <button type="submit">Add Friend</button>
-        </form>
-    </div>
-    
-    <!-- Pending friend requests section -->
-    <div class="pending-requests">
-        <h3>Pending Friend Requests</h3>
-        <div id="pendingRequests">
-          <!-- Pending requests will be loaded here -->
-        </div>
-    </div>
-    
-    <!-- Sent friend requests section -->
-    <div class="sent-requests">
-        <h3>Sent Friend Requests</h3>
-        <div id="sentRequests">
-          <!-- Sent requests will be loaded here -->
-        </div>
-    </div>
-    
-    <!-- Search friends section -->
-    <div class="friend-search">
-        <h3>Search Friends</h3>
-        <form id="searchFriendForm">
+      </section>
+
+      <!-- Search People -->
+      <section class="search-people">
+        <h3>Search and Add Friends</h3>
+        <form id="searchFriendForm" action="#">
           <input type="text" id="searchTerm" placeholder="Enter username" required>
           <button type="submit">Search</button>
         </form>
         <ul id="searchResults"></ul>
-    </div>
-    
-    <!-- Chat window -->
-    <div class="chat-window">
-        <h3 id="chat-with">Select a friend to chat</h3>
-        <div id="chat-messages" style="border:1px solid #ccc; height:300px; overflow-y:scroll;"></div>
-        <form id="messageForm">
-            <input type="hidden" id="receiver_id">
-            <input type="text" id="message" placeholder="Type a message" required>
-            <button type="submit">Send</button>
+      </section>
+
+      <!-- Add Friend Form -->
+      <!-- <section class="add-friend">
+        <h3>Add Friend</h3>
+        <form id="addFriendForm" action="#">
+          <input type="text" id="friend_username" placeholder="Friend username" required>
+          <button type="submit">Add Friend</button>
         </form>
-    </div>
+      </section> -->
+
+      <!-- Requests: Two columns for received and sent requests -->
+      <section class="friend-requests">
+        <div class="requests-container">
+          <div class="received-requests">
+            <h3>Received Requests</h3>
+            <div id="pendingRequests"></div>
+          </div>
+          <div class="sent-requests">
+            <h3>Sent Requests</h3>
+            <div id="sentRequests"></div>
+          </div>
+        </div>
+      </section>
+    </aside>
+
+    <!-- Main Chat Area -->
+    <main class="chat-area">
+      <section class="chat-interface">
+        <h3 id="chat-with">Select a friend to chat</h3>
+        <div id="chat-messages"></div>
+      </section>
+      <section class="chat-form">
+        <form id="messageForm" action="#">
+          <input type="hidden" id="receiver_id">
+          <input type="text" id="message" placeholder="Type a message" required>
+          <button type="submit">Send</button>
+        </form>
+      </section>
+    </main>
+  </div>
   
-</div>
-<script type="module" src="./main.js"></script>
+  <script type="module" src="./main.js"></script>
 </body>
 </html>
